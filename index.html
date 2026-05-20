@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Strip Referer on all outgoing requests. Weidian's JSONP API
+         rejects requests from our github.io referer ("Referer Not
+         Allowed"); per-script referrerPolicy works on desktop but is
+         unreliable in older mobile browsers. A document-level policy
+         is honored everywhere. -->
+    <meta name="referrer" content="no-referrer">
+    <title>Cnmastair - Browse Products</title>
+    <link rel="icon" type="image/png" href="intro-img.png">
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="header-banner">
+        <div class="header-top">
+            <select id="lang-select" class="lang-select" aria-label="Language">
+                <option value="en">🇬🇧 EN</option>
+                <option value="fr">🇫🇷 FR</option>
+                <option value="de">🇩🇪 DE</option>
+                <option value="es">🇪🇸 ES</option>
+                <option value="it">🇮🇹 IT</option>
+            </select>
+            <h1 class="logo">Cnmastair</h1>
+        </div>
+        <div class="intro-box">
+            <p class="intro-text" data-i18n="intro">Welcome to my spreadsheet!</p>
+        </div>
+        <a href="https://litbuy.com/register?inviteCode=CNMASTAIR" target="_blank" rel="noopener noreferrer" class="signup-link">
+            <img src="litbuy-logo.png" alt="LitBuy" class="signup-logo">
+            <span data-i18n="signup">Sign up to LitBuy!</span>
+        </a>
+        <div class="social-stack">
+            <a href="TELEGRAM_URL_HERE" target="_blank" rel="noopener noreferrer" class="social-link telegram-link">
+                <svg class="social-logo" viewBox="0 0 24 24" fill="#fff" aria-hidden="true">
+                    <path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/>
+                </svg>
+                <span data-i18n="telegram">Telegram for more finds!</span>
+            </a>
+            <a href="https://www.youtube.com/@Cnmastair" target="_blank" rel="noopener noreferrer" class="social-link youtube-link">
+                <svg class="social-logo" viewBox="0 0 24 24" aria-hidden="true">
+                    <path fill="#fff" d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.546 15.568V8.432L15.818 12l-6.272 3.568z"/>
+                </svg>
+                <span data-i18n="youtube">YouTube for more content!</span>
+            </a>
+        </div>
+    </div>
+    <header>
+        <div class="search-bar">
+            <div class="search-input-wrapper">
+                <svg class="search-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"/>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input type="text" id="search-input" data-i18n-attr="placeholder:search_placeholder" placeholder="brand search" autocomplete="off">
+            </div>
+            <select id="price-sort">
+                <option value="default" data-i18n="sort_default">Sort by</option>
+                <option value="low" data-i18n="sort_low">Price: Low to High</option>
+                <option value="high" data-i18n="sort_high">Price: High to Low</option>
+            </select>
+        </div>
+        <nav id="category-tabs" class="category-tabs">
+            <button class="category-pill active" data-category="all">All</button>
+        </nav>
+    </header>
+
+    <main>
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p data-i18n="loading">Loading products...</p>
+        </div>
+
+        <div id="error" class="error hidden">
+            <p data-i18n="error_load">Could not load products. Please check your connection and try again.</p>
+            <button onclick="fetchProducts()" data-i18n="retry">Retry</button>
+        </div>
+
+        <div id="product-grid" class="product-grid"></div>
+
+        <div id="no-results" class="no-results hidden">
+            <p data-i18n="no_results">No products found.</p>
+        </div>
+    </main>
+
+    <!-- Product detail modal -->
+    <div id="product-modal" class="product-modal hidden">
+        <div class="product-modal-backdrop"></div>
+        <div class="product-modal-content">
+            <button class="product-modal-close">&times;</button>
+            <img id="modal-img" src="" alt="" class="product-modal-img" referrerpolicy="no-referrer">
+            <div class="product-modal-info">
+                <div id="modal-name" class="product-modal-name"></div>
+                <div id="modal-price" class="product-modal-price"></div>
+            </div>
+            <a id="modal-buy-btn" href="" target="_blank" rel="noopener noreferrer" class="product-modal-buy">
+                <img src="litbuy-logo.png" alt="LitBuy" class="modal-buy-logo">
+                <span data-i18n="buy">Buy on LitBuy</span>
+            </a>
+            <a id="modal-qc-btn" href="" target="_blank" rel="noopener noreferrer" class="product-modal-qc hidden" data-i18n="qc">
+                View QC Photos
+            </a>
+        </div>
+    </div>
+
+    <!-- In-app browser overlay -->
+    <div id="inapp-overlay" class="inapp-overlay hidden">
+        <div class="inapp-card">
+            <h2 data-i18n="inapp_title">Open in Browser</h2>
+            <p data-i18n-html="inapp_body">For the best experience, tap the <strong>three dots</strong> menu (<strong>&#8942;</strong>) at the top right and select <strong>"Open in browser"</strong>.</p>
+            <button id="inapp-ok" class="inapp-ok-btn" data-i18n="inapp_ok">OK</button>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        try {
+            var ua = navigator.userAgent || '';
+            if (/Instagram|FBAN|FBAV|musical_ly|BytedanceWebview|TikTok/i.test(ua)) {
+                var overlay = document.getElementById('inapp-overlay');
+                if (overlay) overlay.classList.remove('hidden');
+            }
+            var okBtn = document.getElementById('inapp-ok');
+            if (okBtn) okBtn.addEventListener('click', function() {
+                var o = document.getElementById('inapp-overlay');
+                if (o) o.classList.add('hidden');
+            });
+        } catch (e) {}
+
+    })();
+    </script>
+
+    <script src="app.js?v=2026-05-20c"></script>
+</body>
+</html>
