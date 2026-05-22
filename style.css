@@ -354,29 +354,6 @@ header.header-hidden {
     transform: scale(0.93);
 }
 
-/* Special Finds pill — gold star + highlight */
-.category-pill[data-category="Special Finds"] {
-    background: linear-gradient(135deg, rgba(245, 197, 24, 0.18) 0%, rgba(245, 197, 24, 0.08) 100%);
-    border-color: var(--accent);
-    color: var(--accent);
-    font-weight: 700;
-    box-shadow: 0 2px 10px rgba(245, 197, 24, 0.2);
-}
-
-.category-pill[data-category="Special Finds"]::before {
-    content: '★ ';
-    color: var(--accent);
-}
-
-.category-pill[data-category="Special Finds"].active {
-    background: var(--accent-gradient);
-    color: #000;
-}
-
-.category-pill[data-category="Special Finds"].active::before {
-    color: #000;
-}
-
 /* Discount Items pill — red flame + highlight */
 .category-pill[data-category="Discount Items"] {
     background: linear-gradient(135deg, rgba(255, 59, 48, 0.22) 0%, rgba(255, 59, 48, 0.08) 100%);
@@ -468,48 +445,6 @@ main {
         border-color: rgba(245, 197, 24, 0.3);
         box-shadow: 0 4px 20px rgba(245, 197, 24, 0.08);
         background: var(--card-bg-hover);
-    }
-}
-
-/* Pinned product cards (Special Finds) — yellow ring, gradient star badge */
-.product-card.pinned {
-    position: relative;
-    border: 1.5px solid var(--accent);
-    box-shadow:
-        0 0 0 1px rgba(245, 197, 24, 0.25),
-        0 4px 20px rgba(245, 197, 24, 0.18);
-    background: linear-gradient(180deg, rgba(245, 197, 24, 0.06) 0%, var(--card-bg) 60%);
-}
-
-.product-card.pinned::before {
-    content: '★';
-    position: absolute;
-    top: 6px;
-    right: 6px;
-    z-index: 2;
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    background: var(--accent-gradient);
-    color: #000;
-    font-size: 12px;
-    font-weight: 700;
-    line-height: 22px;
-    text-align: center;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
-    pointer-events: none;
-}
-
-.product-card.pinned .product-price {
-    color: var(--accent);
-}
-
-@media (hover: hover) {
-    .product-card.pinned:hover {
-        border-color: var(--accent);
-        box-shadow:
-            0 0 0 1px rgba(245, 197, 24, 0.45),
-            0 6px 26px rgba(245, 197, 24, 0.28);
     }
 }
 

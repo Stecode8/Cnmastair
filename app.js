@@ -7,11 +7,9 @@ const TRANSLATIONS = {
         signup: 'Sign up to LitBuy!',
         youtube: 'YouTube for more content!',
         search_placeholder: 'brand search',
-        sort_default: 'Sort by',
         sort_low: 'Price: Low to High',
         sort_high: 'Price: High to Low',
         cat_all: 'All',
-        cat_special: 'Special Finds',
         cat_discount: '🔥 Discount Items',
         cat_bestsellers: '🌟 Best Sellers',
         cat_budget: 'Budget Finds',
@@ -31,11 +29,9 @@ const TRANSLATIONS = {
         signup: 'Inscrivez-vous sur LitBuy !',
         youtube: 'YouTube pour plus de contenu !',
         search_placeholder: 'rechercher une marque',
-        sort_default: 'Trier par',
         sort_low: 'Prix : croissant',
         sort_high: 'Prix : décroissant',
         cat_all: 'Tout',
-        cat_special: 'Trouvailles Spéciales',
         cat_discount: '🔥 Promotions',
         cat_bestsellers: '🌟 Meilleures Ventes',
         cat_budget: 'Petits Prix',
@@ -55,11 +51,9 @@ const TRANSLATIONS = {
         signup: 'Bei LitBuy anmelden!',
         youtube: 'YouTube für mehr Inhalte!',
         search_placeholder: 'Marke suchen',
-        sort_default: 'Sortieren nach',
         sort_low: 'Preis: aufsteigend',
         sort_high: 'Preis: absteigend',
         cat_all: 'Alle',
-        cat_special: 'Besondere Funde',
         cat_discount: '🔥 Rabatte',
         cat_bestsellers: '🌟 Bestseller',
         cat_budget: 'Schnäppchen',
@@ -79,11 +73,9 @@ const TRANSLATIONS = {
         signup: '¡Regístrate en LitBuy!',
         youtube: '¡YouTube para más contenido!',
         search_placeholder: 'buscar marca',
-        sort_default: 'Ordenar por',
         sort_low: 'Precio: menor a mayor',
         sort_high: 'Precio: mayor a menor',
         cat_all: 'Todo',
-        cat_special: 'Hallazgos Especiales',
         cat_discount: '🔥 Descuentos',
         cat_bestsellers: '🌟 Más Vendidos',
         cat_budget: 'Ofertas',
@@ -103,11 +95,9 @@ const TRANSLATIONS = {
         signup: 'Iscriviti a LitBuy!',
         youtube: 'YouTube per altri contenuti!',
         search_placeholder: 'cerca un marchio',
-        sort_default: 'Ordina per',
         sort_low: 'Prezzo: crescente',
         sort_high: 'Prezzo: decrescente',
         cat_all: 'Tutto',
-        cat_special: 'Trovate Speciali',
         cat_discount: '🔥 Sconti',
         cat_bestsellers: '🌟 Più Venduti',
         cat_budget: 'Offerte',
@@ -272,17 +262,13 @@ document.addEventListener('DOMContentLoaded', () => window.i18n.init());
 // CONFIG
 //
 // Single-sheet setup. Layout: A=picture, B=name, C=price, D=link.
-// Sheet rows below SPECIAL_FINDS_ROW_BOUNDARY are tagged Special
-// Finds (yellow ring + star, floated to the top, auto-pinned to a
-// matching clothing pill via SPECIAL_PIN_KEYWORDS). Rows at/after
-// the boundary are regular catalog items — their category is also
-// derived from name keywords; items with no keyword match are only
+// Every row's category is derived from name keywords via
+// SPECIAL_PIN_KEYWORDS; items with no keyword match are only
 // reachable from the "All" pill.
 // Sheet must be set to "Anyone with the link can view".
 // =============================================================
 const SHEET_ID = '183I-MwB3zY5nCrcZgypXgK_eogoNjJV0q8G6Gpft8y4';
 const SHEET_GID = '2130334132';
-const SPECIAL_FINDS_ROW_BOUNDARY = 63;
 
 const REFRESH_INTERVAL = 5 * 60 * 1000;
 
@@ -665,7 +651,7 @@ const noResultsEl = document.getElementById('no-results');
 const categoryTabsEl = document.getElementById('category-tabs');
 const searchInput = document.getElementById('search-input');
 const priceSortEl = document.getElementById('price-sort');
-let priceSort = 'default';
+let priceSort = 'low';
 
 // Build the rendered URL for a product photo. Google-hosted images
 // (lh3/lh4/etc. .googleusercontent.com), INCLUDING the docsubipk inline
@@ -763,13 +749,12 @@ function fixLink(link) {
     return link;
 }
 
-// Keyword → clothes-category mapping. Each product name is scanned
-// (most-specific patterns first) to derive a category — Special Finds
-// items use it as pinCategory so they surface in the matching clothing
-// pill ("Bape Tee" → T-Shirts), and regular-catalog rows use it as
-// their primary category. Items with no keyword match are reachable
-// only via the "All" pill. The target strings on the right side of
-// each entry below define the set of clothing pills that can appear.
+// Keyword → category mapping. Each product name is scanned
+// (most-specific patterns first) to derive a category ("Bape Tee"
+// → T-Shirts, "Adidas Pants" → Pants). Items with no keyword match
+// are reachable only via the "All" pill. The target strings on the
+// right side of each entry below define the set of category pills
+// that can appear.
 //
 // Word-boundary anchored to avoid "set" matching "Sunset" or "shirt"
 // matching "sweatshirt" (resolved by ordering: 'sweatshirt' would need
@@ -868,11 +853,9 @@ function derivePinCategory(name) {
 // HTML PARSING — Main sheet
 // Layout: A=picture, B=name, C=price, D=link.
 // Each <tr> in Google's htmlview has a leading <th> with the sheet
-// row number (1-indexed). Rows below SPECIAL_FINDS_ROW_BOUNDARY get
-// category='Special Finds' (yellow ring + star, top-pinned) with a
-// pinCategory derived from the product name; rows at/after the
-// boundary get category = derivePinCategory(name) (or undefined,
-// which makes them visible only via the "All" pill).
+// row number (1-indexed). Every row's category is derived from the
+// product name via derivePinCategory; items with no keyword match
+// have no category and are only reachable via the "All" pill.
 // =============================================================
 function parseHtmlSheetMain(html) {
     const parser = new DOMParser();
@@ -925,21 +908,29 @@ function parseHtmlSheetMain(html) {
 
         if (!photo && !weidianId) continue;
 
-        const isSpecial = sheetRow < SPECIAL_FINDS_ROW_BOUNDARY;
-        const pinCat = derivePinCategory(name);
         const product = {
             name,
             price,
             photo,
             link,
             weidianId,
-            category: isSpecial ? 'Special Finds' : pinCat,
+            category: derivePinCategory(name),
         };
-        if (isSpecial) product.pinCategory = pinCat;
         products.push(product);
     }
 
     return products;
+}
+
+// FNV-1a 32-bit hash. Stable across reloads so the scattered order
+// stays the same between renders (avoids items jumping around).
+function scatterHash(s) {
+    let h = 2166136261 >>> 0;
+    for (let i = 0; i < s.length; i++) {
+        h ^= s.charCodeAt(i);
+        h = Math.imul(h, 16777619);
+    }
+    return h >>> 0;
 }
 
 // =============================================================
@@ -957,10 +948,12 @@ async function fetchProducts() {
         const html = await resp.text();
         const parsed = parseHtmlSheetMain(html);
 
-        // sourceOrder floats Special Finds to the top when rendering.
+        // Stable hash-based sourceOrder scatters items within each category
+        // so previously-pinned rows interleave with the rest instead of
+        // clumping at the top (they sit at the top of the sheet).
         allProducts = parsed.map(p => ({
             ...p,
-            sourceOrder: p.category === 'Special Finds' ? 0 : 1,
+            sourceOrder: scatterHash(p.link || p.name),
         }));
 
         if (allProducts.length === 0) {
@@ -987,7 +980,7 @@ function buildCategoryTabs() {
     const categories = [...new Set(allProducts.map(p => p.category).filter(Boolean))];
     categoryTabsEl.innerHTML = '';
 
-    const frontPinned = ['Discount Items', 'Best Sellers', 'Budget Finds', 'Special Finds'];
+    const frontPinned = ['Discount Items', 'Best Sellers', 'Budget Finds'];
     for (const name of [...frontPinned].reverse()) {
         const idx = categories.indexOf(name);
         if (idx > -1) {
@@ -1014,7 +1007,6 @@ function addPill(label, value) {
 
 function catTranslationKey(value) {
     if (value === 'all') return 'cat_all';
-    if (value === 'Special Finds') return 'cat_special';
     if (value === 'Budget Finds') return 'cat_budget';
     if (value === 'Discount Items') return 'cat_discount';
     if (value === 'Best Sellers') return 'cat_bestsellers';
@@ -1058,36 +1050,25 @@ function renderProducts(skipAnimation) {
     let filtered = allProducts;
 
     if (activeCategory !== 'all') {
-        // Route Special Finds into the matching clothes category by name
-        // keyword (set on p.pinCategory at parse time). A "Bape Tee"
-        // surfaces in T-Shirts, "Adidas Pants" in Pants, etc. They keep
-        // their Special Finds category too — the Special Finds pill is
-        // unchanged. sourceOrder=3 vs clothes=4 floats them to the top.
-        filtered = filtered.filter(
-            p => p.category === activeCategory ||
-                 (p.category === 'Special Finds' && p.pinCategory === activeCategory)
-        );
+        filtered = filtered.filter(p => p.category === activeCategory);
     }
 
     if (searchQuery) {
         filtered = filtered.filter(p => matchesSearch(p.name, searchQuery));
     }
 
-    // Sort: photos first, then sourceOrder tiebreak (Special Finds → Budget Finds).
+    // Sort by price (cheapest first by default), tiebreak photos-first,
+    // then scattered sourceOrder so equal-price items don't clump in
+    // sheet order.
     filtered.sort((a, b) => {
+        const pa = parseFloat(a.price.replace(/[^0-9.]/g, '')) || 0;
+        const pb = parseFloat(b.price.replace(/[^0-9.]/g, '')) || 0;
+        const priceCmp = priceSort === 'high' ? pb - pa : pa - pb;
+        if (priceCmp !== 0) return priceCmp;
         const photoCmp = (b.photo ? 1 : 0) - (a.photo ? 1 : 0);
         if (photoCmp !== 0) return photoCmp;
         return (a.sourceOrder || 0) - (b.sourceOrder || 0);
     });
-
-    // Apply price sort if selected
-    if (priceSort === 'low' || priceSort === 'high') {
-        filtered.sort((a, b) => {
-            const pa = parseFloat(a.price.replace(/[^0-9.]/g, '')) || 0;
-            const pb = parseFloat(b.price.replace(/[^0-9.]/g, '')) || 0;
-            return priceSort === 'low' ? pa - pb : pb - pa;
-        });
-    }
 
     if (filtered.length === 0 && allProducts.length > 0) {
         gridEl.style.minHeight = '';
@@ -1110,8 +1091,7 @@ function buildCard(p, i) {
 
     const card = document.createElement('div');
     let extraClass = '';
-    if (p.category === 'Special Finds') extraClass = ' pinned';
-    else if (p.category === 'Discount Items' || p.isDiscount) extraClass = ' discount';
+    if (p.category === 'Discount Items' || p.isDiscount) extraClass = ' discount';
     else if (p.category === 'Best Sellers') extraClass = ' bestseller';
     else if (p.category === 'Budget Finds') extraClass = ' budget';
     card.className = 'product-card' + extraClass;
