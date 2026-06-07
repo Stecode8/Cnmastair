@@ -935,12 +935,51 @@ function scatterHash(s) {
 
 // =============================================================
 // FETCH PRODUCTS
+//
+// Stale-while-revalidate: the catalog is one HTTP response (a Google
+// Sheet htmlview), so the price-sorted order can't be known until the
+// whole thing has downloaded + parsed. Rather than block behind the
+// spinner every visit, we cache the last-parsed catalog in localStorage
+// and paint it instantly on load, THEN fetch fresh in the background and
+// reconcile via renderProducts' append-don't-wipe path. Returning
+// visitors never see the loading screen; first-ever visitors see it once.
 // =============================================================
+const PRODUCTS_CACHE_KEY = 'cnmastair-products-v1';
+
+function loadProductsCache() {
+    try {
+        const raw = localStorage.getItem(PRODUCTS_CACHE_KEY);
+        const arr = raw ? JSON.parse(raw) : null;
+        return Array.isArray(arr) && arr.length ? arr : null;
+    } catch (e) { return null; }
+}
+
+function saveProductsCache(products) {
+    try { localStorage.setItem(PRODUCTS_CACHE_KEY, JSON.stringify(products)); } catch (e) {}
+}
+
 async function fetchProducts() {
-    loadingEl.classList.remove('hidden');
     errorEl.classList.add('hidden');
-    gridEl.innerHTML = '';
-    noResultsEl.classList.add('hidden');
+
+    const havePainted = allProducts.length > 0;
+
+    // Paint cached catalog immediately so the spinner never shows on a
+    // return visit. Only on the very first paint (nothing on screen yet).
+    if (!havePainted) {
+        const cached = loadProductsCache();
+        if (cached) {
+            allProducts = cached;
+            buildCategoryTabs();
+            renderProducts();
+            loadingEl.classList.add('hidden');
+            if (window.i18n) window.i18n.translateDynamic();
+        } else {
+            // First-ever visit, nothing to show — spinner stays until fetch.
+            loadingEl.classList.remove('hidden');
+            gridEl.innerHTML = '';
+            noResultsEl.classList.add('hidden');
+        }
+    }
 
     try {
         const resp = await fetch(buildHtmlUrl(SHEET_ID, SHEET_GID));
@@ -951,14 +990,16 @@ async function fetchProducts() {
         // Stable hash-based sourceOrder scatters items within each category
         // so previously-pinned rows interleave with the rest instead of
         // clumping at the top (they sit at the top of the sheet).
-        allProducts = parsed.map(p => ({
+        const fresh = parsed.map(p => ({
             ...p,
             sourceOrder: scatterHash(p.link || p.name),
         }));
 
-        if (allProducts.length === 0) {
+        if (fresh.length === 0) {
             throw new Error('Sheet returned no parseable rows');
         }
+        allProducts = fresh;
+        saveProductsCache(fresh);
         buildCategoryTabs();
         renderProducts();
         loadingEl.classList.add('hidden');
@@ -966,7 +1007,11 @@ async function fetchProducts() {
     } catch (err) {
         console.error('Failed to fetch products:', err);
         loadingEl.classList.add('hidden');
-        errorEl.classList.remove('hidden');
+        // A failed background refresh must not blow away a working view.
+        // Only surface the error when there's nothing on screen.
+        if (allProducts.length === 0) {
+            errorEl.classList.remove('hidden');
+        }
     }
 }
 
@@ -1046,7 +1091,42 @@ priceSortEl.addEventListener('change', (e) => {
 // =============================================================
 // RENDER
 // =============================================================
-function renderProducts(skipAnimation) {
+
+// The render key is the identity of the current view: filter + search +
+// sort. When a background refresh re-renders with the SAME key and the
+// already-painted cards are still an exact prefix of the freshly sorted
+// list, we keep the existing DOM (and card indices) and let the extra
+// items flow in below via appendBatch / infinite scroll — instead of
+// wiping the grid, which would flash and jump the scroll position.
+let lastRenderKey = null;
+
+function renderKey() {
+    return activeCategory + ' ' + searchQuery + ' ' + priceSort;
+}
+
+// Stable per-product identity (object refs differ across fetches because
+// each refresh rebuilds allProducts from scratch).
+function productKey(p) {
+    return p.link || p.name;
+}
+
+// Are the first `n` items of `next` the same products, in the same order,
+// as the first `n` of `prev`? Cheap prefix check by stable key.
+function sameRenderedPrefix(prev, next, n) {
+    if (next.length < n) return false;
+    for (let i = 0; i < n; i++) {
+        if (productKey(prev[i]) !== productKey(next[i])) return false;
+    }
+    return true;
+}
+
+// forceFull bypasses the append path and always rebuilds the grid. Callers
+// pass it when the visible card CONTENT may have changed even though the
+// product set / order hasn't — e.g. translateDynamic() repainting cards with
+// freshly fetched translations. (Category / search / sort changes already
+// change the render key, so they re-render regardless.) The background
+// refresh in fetchProducts passes nothing, keeping it append-eligible.
+function renderProducts(forceFull) {
     let filtered = allProducts;
 
     if (activeCategory !== 'all') {
@@ -1073,14 +1153,31 @@ function renderProducts(skipAnimation) {
     if (filtered.length === 0 && allProducts.length > 0) {
         gridEl.style.minHeight = '';
         gridEl.innerHTML = '';
+        currentFiltered = filtered;
+        renderedCount = 0;
+        lastRenderKey = renderKey();
         noResultsEl.classList.remove('hidden');
         return;
     }
 
     noResultsEl.classList.add('hidden');
-    currentFiltered = filtered;
-    renderedCount = 0;
 
+    // Append path: same view AND the painted cards are still a prefix of the
+    // new list. Keep the DOM, swap in the (re)sorted backing array — existing
+    // indices still resolve to the same products, and any new items appear
+    // below via appendBatch on scroll. No wipe, no scroll jump.
+    const key = renderKey();
+    if (!forceFull && key === lastRenderKey && renderedCount > 0 &&
+        sameRenderedPrefix(currentFiltered, filtered, renderedCount)) {
+        currentFiltered = filtered;
+        return;
+    }
+
+    // Full re-render — view changed, or the prefix shifted (so the existing
+    // DOM order would no longer match the required sort order).
+    currentFiltered = filtered;
+    lastRenderKey = key;
+    renderedCount = 0;
     gridEl.innerHTML = '';
     appendBatch();
 }
