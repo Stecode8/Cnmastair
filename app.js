@@ -4,7 +4,7 @@
 const TRANSLATIONS = {
     en: {
         intro: 'Welcome to my spreadsheet!',
-        signup: 'Sign up to LitBuy!',
+        signup: 'Sign up to Boonbuy!',
         youtube: 'YouTube for more content!',
         search_placeholder: 'brand search',
         sort_low: 'Price: Low to High',
@@ -21,12 +21,12 @@ const TRANSLATIONS = {
         inapp_body: 'For the best experience, tap the <strong>three dots</strong> menu (<strong>&#8942;</strong>) at the top right and select <strong>"Open in browser"</strong>.',
         inapp_ok: 'OK',
         telegram: 'Telegram for more finds!',
-        buy: 'Buy on LitBuy',
+        buy: 'Buy on Boonbuy',
         qc: 'View QC Photos',
     },
     fr: {
         intro: 'Bienvenue sur ma feuille !',
-        signup: 'Inscrivez-vous sur LitBuy !',
+        signup: 'Inscrivez-vous sur Boonbuy !',
         youtube: 'YouTube pour plus de contenu !',
         search_placeholder: 'rechercher une marque',
         sort_low: 'Prix : croissant',
@@ -43,12 +43,12 @@ const TRANSLATIONS = {
         inapp_body: 'Pour une meilleure expérience, appuyez sur le menu <strong>trois points</strong> (<strong>&#8942;</strong>) en haut à droite et sélectionnez <strong>« Ouvrir dans le navigateur »</strong>.',
         inapp_ok: 'OK',
         telegram: 'Telegram pour plus de trouvailles !',
-        buy: 'Acheter sur LitBuy',
+        buy: 'Acheter sur Boonbuy',
         qc: 'Voir les photos QC',
     },
     de: {
         intro: 'Willkommen in meiner Tabelle!',
-        signup: 'Bei LitBuy anmelden!',
+        signup: 'Bei Boonbuy anmelden!',
         youtube: 'YouTube für mehr Inhalte!',
         search_placeholder: 'Marke suchen',
         sort_low: 'Preis: aufsteigend',
@@ -65,12 +65,12 @@ const TRANSLATIONS = {
         inapp_body: 'Für ein besseres Erlebnis tippe auf das <strong>Drei-Punkte</strong>-Menü (<strong>&#8942;</strong>) oben rechts und wähle <strong>„Im Browser öffnen"</strong>.',
         inapp_ok: 'OK',
         telegram: 'Telegram für mehr Funde!',
-        buy: 'Bei LitBuy kaufen',
+        buy: 'Bei Boonbuy kaufen',
         qc: 'QC-Fotos ansehen',
     },
     es: {
         intro: '¡Bienvenido a mi hoja!',
-        signup: '¡Regístrate en LitBuy!',
+        signup: '¡Regístrate en Boonbuy!',
         youtube: '¡YouTube para más contenido!',
         search_placeholder: 'buscar marca',
         sort_low: 'Precio: menor a mayor',
@@ -87,12 +87,12 @@ const TRANSLATIONS = {
         inapp_body: 'Para una mejor experiencia, toca el menú de <strong>tres puntos</strong> (<strong>&#8942;</strong>) arriba a la derecha y selecciona <strong>«Abrir en el navegador»</strong>.',
         inapp_ok: 'OK',
         telegram: '¡Telegram para más hallazgos!',
-        buy: 'Comprar en LitBuy',
+        buy: 'Comprar en Boonbuy',
         qc: 'Ver fotos QC',
     },
     it: {
         intro: 'Benvenuto nel mio foglio!',
-        signup: 'Iscriviti a LitBuy!',
+        signup: 'Iscriviti a Boonbuy!',
         youtube: 'YouTube per altri contenuti!',
         search_placeholder: 'cerca un marchio',
         sort_low: 'Prezzo: crescente',
@@ -109,7 +109,7 @@ const TRANSLATIONS = {
         inapp_body: 'Per una migliore esperienza, tocca il menu a <strong>tre puntini</strong> (<strong>&#8942;</strong>) in alto a destra e seleziona <strong>«Apri nel browser»</strong>.',
         inapp_ok: 'OK',
         telegram: 'Telegram per altre trovate!',
-        buy: 'Acquista su LitBuy',
+        buy: 'Acquista su Boonbuy',
         qc: 'Vedi foto QC',
     },
 };
@@ -267,7 +267,7 @@ document.addEventListener('DOMContentLoaded', () => window.i18n.init());
 // reachable from the "All" pill.
 // Sheet must be set to "Anyone with the link can view".
 // =============================================================
-const SHEET_ID = '183I-MwB3zY5nCrcZgypXgK_eogoNjJV0q8G6Gpft8y4';
+const SHEET_ID = '18Dg93lRzr00nPru_976WsKv_QaeLIapo7coFgfFAMQo';
 const SHEET_GID = '2130334132';
 
 const REFRESH_INTERVAL = 5 * 60 * 1000;
@@ -736,15 +736,22 @@ function extractLink(cell) {
     return match ? decodeURIComponent(match[1]) : href;
 }
 
+// Boonbuy affiliate code. Product links in the sheet look like
+// https://boonbuy.com/product/2/<weidianId>?inviteCode=CN40
+const INVITE_CODE = 'CN40';
+
 function fixLink(link) {
     if (!link) return '';
+    // Boonbuy short links (gateway.boonbuy.com/unified-service/lit/xxxx)
+    // already resolve to the affiliate-tagged page; don't mangle them.
+    if (/gateway\.boonbuy\.com/i.test(link)) return link;
     if (!link.includes('?') && link.includes('&')) {
         link = link.replace('&', '?');
     }
     if (/inviteCode=/i.test(link)) {
-        link = link.replace(/inviteCode=[^&]*/i, 'inviteCode=CNMASTAIR');
+        link = link.replace(/inviteCode=[^&]*/i, 'inviteCode=' + INVITE_CODE);
     } else {
-        link += (link.includes('?') ? '&' : '?') + 'inviteCode=CNMASTAIR';
+        link += (link.includes('?') ? '&' : '?') + 'inviteCode=' + INVITE_CODE;
     }
     return link;
 }
@@ -903,7 +910,8 @@ function parseHtmlSheetMain(html) {
         if (!link) continue;
 
         let weidianId = '';
-        const idMatch = link.match(/[?&]id[=%3D]*(\d+)/i) || link.match(/\/weidian\/(\d+)/i);
+        // Boonbuy: /product/2/<id> (platform 2 = Weidian). Legacy: /weidian/<id> or ?id=<id>.
+        const idMatch = link.match(/\/product\/2\/(\d+)/i) || link.match(/[?&]id[=%3D]*(\d+)/i) || link.match(/\/weidian\/(\d+)/i);
         if (idMatch) weidianId = idMatch[1];
 
         if (!photo && !weidianId) continue;
@@ -944,7 +952,18 @@ function scatterHash(s) {
 // reconcile via renderProducts' append-don't-wipe path. Returning
 // visitors never see the loading screen; first-ever visitors see it once.
 // =============================================================
-const PRODUCTS_CACHE_KEY = 'cnmastair-products-v1';
+// Keyed by sheet so switching spreadsheets (e.g. LitBuy -> Boonbuy) never
+// paints a stale catalog from the previous sheet.
+const PRODUCTS_CACHE_KEY = 'cnmastair-products-v2-' + SHEET_ID;
+// Drop caches from previous sheets / schema versions.
+try {
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('cnmastair-products-') && k !== PRODUCTS_CACHE_KEY) {
+            localStorage.removeItem(k);
+        }
+    }
+} catch (e) {}
 
 function loadProductsCache() {
     try {

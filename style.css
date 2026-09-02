@@ -15,9 +15,9 @@ html {
     --card-bg-hover: #1f1f1f;
     --text: #f5f5f7;
     --text-secondary: #86868b;
-    --accent: #f5c518;
-    --accent-glow: rgba(245, 197, 24, 0.15);
-    --accent-gradient: linear-gradient(135deg, #f5c518 0%, #f0a000 100%);
+    --accent: #ff8a1f;
+    --accent-glow: rgba(255, 138, 31, 0.15);
+    --accent-gradient: linear-gradient(135deg, #ff9a2e 0%, #ff6a00 100%);
     --border: rgba(255, 255, 255, 0.08);
     --border-light: rgba(255, 255, 255, 0.12);
     --header-bg: rgba(14, 14, 14, 0.8);
@@ -25,7 +25,7 @@ html {
     --pill-hover: rgba(255, 255, 255, 0.1);
     --pill-active-bg: var(--accent);
     --pill-active-text: #000;
-    --price-color: #f5c518;
+    --price-color: #ff8a1f;
     --eur-color: #86868b;
     --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
     --shadow-md: 0 4px 16px rgba(0,0,0,0.4);
@@ -104,7 +104,7 @@ header.header-hidden {
 
 .lang-select:hover,
 .lang-select:focus {
-    border-color: var(--accent, #f5c518);
+    border-color: var(--accent, #ff8a1f);
     outline: none;
 }
 
@@ -176,12 +176,12 @@ header.header-hidden {
     font-weight: 700;
     letter-spacing: -0.2px;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
-    box-shadow: 0 2px 12px rgba(245, 197, 24, 0.25);
+    box-shadow: 0 2px 12px rgba(255, 138, 31, 0.25);
 }
 
 .signup-link:active {
     transform: scale(0.97);
-    box-shadow: 0 1px 6px rgba(245, 197, 24, 0.2);
+    box-shadow: 0 1px 6px rgba(255, 138, 31, 0.2);
 }
 
 .signup-logo {
@@ -347,7 +347,7 @@ header.header-hidden {
     color: var(--pill-active-text);
     border-color: var(--accent);
     font-weight: 600;
-    box-shadow: 0 2px 10px rgba(245, 197, 24, 0.2);
+    box-shadow: 0 2px 10px rgba(255, 138, 31, 0.2);
 }
 
 .category-pill:active {
@@ -442,8 +442,8 @@ main {
 
 @media (hover: hover) {
     .product-card:hover {
-        border-color: rgba(245, 197, 24, 0.3);
-        box-shadow: 0 4px 20px rgba(245, 197, 24, 0.08);
+        border-color: rgba(255, 138, 31, 0.3);
+        box-shadow: 0 4px 20px rgba(255, 138, 31, 0.08);
         background: var(--card-bg-hover);
     }
 }
@@ -654,7 +654,7 @@ main {
     font-weight: 600;
     font-family: inherit;
     cursor: pointer;
-    box-shadow: 0 2px 10px rgba(245, 197, 24, 0.2);
+    box-shadow: 0 2px 10px rgba(255, 138, 31, 0.2);
 }
 
 /* ===== No Results ===== */
@@ -818,13 +818,13 @@ main {
     text-decoration: none;
     cursor: pointer;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
-    box-shadow: 0 2px 12px rgba(245, 197, 24, 0.25);
+    box-shadow: 0 2px 12px rgba(255, 138, 31, 0.25);
     letter-spacing: -0.2px;
 }
 
 .product-modal-buy:active {
     transform: scale(0.97);
-    box-shadow: 0 1px 6px rgba(245, 197, 24, 0.2);
+    box-shadow: 0 1px 6px rgba(255, 138, 31, 0.2);
 }
 
 .modal-buy-logo {
@@ -839,12 +839,12 @@ main {
     justify-content: center;
     margin: 0 18px 18px;
     padding: 12px;
-    background: rgba(245, 197, 24, 0.08);
+    background: rgba(255, 138, 31, 0.08);
     color: var(--accent);
     font-size: 14px;
     font-weight: 600;
     border-radius: var(--radius-md);
-    border: 1.5px solid rgba(245, 197, 24, 0.25);
+    border: 1.5px solid rgba(255, 138, 31, 0.25);
     text-decoration: none;
     cursor: pointer;
     transition: all 0.15s ease;
@@ -853,7 +853,7 @@ main {
 
 .product-modal-qc:active {
     transform: scale(0.97);
-    background: rgba(245, 197, 24, 0.12);
+    background: rgba(255, 138, 31, 0.12);
 }
 
 /* ===== In-app Browser Overlay ===== */
@@ -912,5 +912,5 @@ main {
     font-size: 1rem;
     font-weight: 700;
     cursor: pointer;
-    box-shadow: 0 2px 10px rgba(245, 197, 24, 0.2);
+    box-shadow: 0 2px 10px rgba(255, 138, 31, 0.2);
 }
